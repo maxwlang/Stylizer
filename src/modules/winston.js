@@ -1,7 +1,7 @@
 const { createLogger, format, transports, } = require('winston');
 const {
     logs,
-    discord
+    discord,
 } = require('../config');
 
 const {

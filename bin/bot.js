@@ -36,6 +36,8 @@ class Stylizer extends AkairoClient {
         this.commandHandler = new CommandHandler(this, {
             directory: './src/commands/',
             prefix: discord.prefix,
+            handleEdits: true,
+            commandUtil: true,
         });
 
         // Inhibitors
