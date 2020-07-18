@@ -30,4 +30,4 @@ class Stylizer extends AkairoClient {
 }
 
 const client = new Stylizer();
-client.login(discord.token);
+if (!discord.sharding.enabled) client.login(discord.token);
