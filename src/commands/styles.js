@@ -1,17 +1,17 @@
 /* eslint-disable class-methods-use-this */
 /**
- * StylizeGif Command
- * Stylizes gifs
+ * Styles Command
+ * Shows list of availible models
  */
 const { Command, } = require('discord-akairo');
 
-class StylizeGif extends Command {
+class Styles extends Command {
     constructor() {
-        super('stylizegif', {
+        super('styles', {
             aliases: [
-                'stylizegif',
-                'stylegif',
-                'sgif',
+                'styles',
+                'list',
+                'l',
             ],
         });
     }
@@ -21,4 +21,4 @@ class StylizeGif extends Command {
     }
 }
 
-module.exports = StylizeGif;
+module.exports = Styles;
