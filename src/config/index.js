@@ -1,8 +1,8 @@
 const config = {
-    db: require('./db'),
+    database: require('./database'),
+    logs: require('./logs'),
     debug: require('./debug'),
     discord: require('./discord'),
-    logs: require('./logs'),
     sentry: require('./sentry'),
 };
 
