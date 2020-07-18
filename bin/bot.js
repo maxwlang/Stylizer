@@ -15,7 +15,7 @@ const {
 const logger = require('../src/modules/winston');
 
 // We've successfully reached our bot core code.
-logger.info('Stylizer starting up!');
+logger.info(`${discord.name} starting up!`);
 
 // Initialize Sentry error handler if enabled
 if (sentry.enabled) {

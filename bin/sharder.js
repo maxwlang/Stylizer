@@ -9,7 +9,7 @@ const {
 } = require('../src/config');
 const logger = require('../src/modules/winston');
 
-logger.info('Stylizer is preparing to spawn shards..');
+logger.info(`${discord.name} is preparing to spawn shards..`);
 
 // Initialize Sentry error handler if enabled
 if (sentry.enabled) {

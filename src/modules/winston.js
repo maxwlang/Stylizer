@@ -1,5 +1,8 @@
 const { createLogger, format, transports, } = require('winston');
-const { logs, } = require('../config');
+const {
+    logs,
+    discord
+} = require('../config');
 
 const {
     combine,
@@ -32,7 +35,7 @@ const logger = createLogger({
                     label,
                     level,
                     message,
-                }) => `[${timestamp}][Stylizer]${label}[${level}]: ${message}`)
+                }) => `[${timestamp}][${discord.name}]${label}[${level}]: ${message}`)
             ),
         }));
 
