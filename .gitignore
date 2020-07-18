@@ -1,5 +1,6 @@
-# Node modules
-node_modules/**
+# Junk
+node_modules/
+.vscode/
 
 # Data files
 data/logs/**
