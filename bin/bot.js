@@ -1,5 +1,10 @@
 // Node modules
-const { AkairoClient, } = require('discord-akairo');
+const {
+    AkairoClient,
+    CommandHandler,
+    ListenerHandler,
+    InhibitorHandler,
+} = require('discord-akairo');
 const Sentry = require('@sentry/node');
 
 // Vital local resources
@@ -22,12 +27,40 @@ if (sentry.enabled) {
 class Stylizer extends AkairoClient {
     constructor() {
         super({
-            ownerID: '707022657354203180', // or array
+            ownerID: discord.owners,
         }, {
             disableMentions: 'everyone',
         });
+
+        // Commands
+        this.commandHandler = new CommandHandler(this, {
+            directory: './src/commands/',
+            prefix: discord.prefix,
+        });
+
+        // Inhibitors
+        this.inhibitorHandler = new InhibitorHandler(this, {
+            directory: './src/inhibitors/',
+        });
+
+        // Listeners
+        this.listenerHandler = new ListenerHandler(this, {
+            directory: './src/listeners/',
+        });
+
+        // Load
+        this.commandHandler.loadAll();
+        this.commandHandler.useInhibitorHandler(this.inhibitorHandler);
+        this.inhibitorHandler.loadAll();
+        this.commandHandler.useListenerHandler(this.listenerHandler);
+        this.listenerHandler.setEmitters({
+            commandHandler: this.commandHandler,
+            inhibitorHandler: this.inhibitorHandler,
+            listenerHandler: this.listenerHandler,
+        });
+        this.listenerHandler.loadAll();
     }
 }
 
 const client = new Stylizer();
-if (!discord.sharding.enabled) client.login(discord.token);
+if (!discord.sharding.enabled) client.login(discord.token).catch(logger.error);
