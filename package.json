@@ -1,0 +1,141 @@
+{
+  "name": "stylebot",
+  "version": "1.0.0",
+  "description": "Style transfer discord bot",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon -w src/* -w ./index.js -w ./package.json ./index.js",
+    "start": "node index.js"
+  },
+  "author": "maxwlang",
+  "license": "GPLv3",
+  "dependencies": {
+    "@sentry/node": "^5.19.2",
+    "discord-akairo": "^8.0.0",
+    "discord.js": "^12.2.0",
+    "sequelize": "^6.3.3",
+    "sqlite": "^4.0.11"
+  },
+  "devDependencies": {
+    "eslint": "^7.4.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0",
+    "nodemon": "^2.0.4"
+  },
+  "eslintConfig": {
+    "extends": "airbnb-base",
+    "plugins": [
+      "import"
+    ],
+    "env": {
+      "es6": true,
+      "browser": false,
+      "node": true,
+      "jquery": false
+    },
+    "globals": {
+    },
+    "parserOptions": {
+      "ecmaVersion": 8
+    },
+    "rules": {
+      "arrow-body-style": [
+        "error",
+        "as-needed"
+      ],
+      "arrow-parens": [
+        "warn",
+        "as-needed"
+      ],
+      "comma-dangle": [
+        "warn",
+        {
+          "arrays": "always-multiline",
+          "objects": "always",
+          "imports": "never",
+          "exports": "never",
+          "functions": "ignore"
+        }
+      ],
+      "consistent-return": 0,
+      "func-names": 0,
+      "global-require": 0,
+      "guard-for-in": 0,
+      "import/extensions": 0,
+      "import/no-extraneous-dependencies": [
+        "error",
+        {
+          "devDependencies": true
+        }
+      ],
+      "import/no-unresolved": [
+        "error",
+        {
+          "ignore": [
+            "^bootstrap"
+          ]
+        }
+      ],
+      "indent": [
+        "error",
+        4,
+        {
+          "SwitchCase": 1
+        }
+      ],
+      "linebreak-style": 0,
+      "max-len": 0,
+      "no-bitwise": 0,
+      "no-console": 0,
+      "no-continue": 0,
+      "no-extra-boolean-cast": 0,
+      "no-labels": 0,
+      "no-mixed-operators": 0,
+      "no-multiple-empty-lines": [
+        "warn",
+        {
+          "max": 2,
+          "maxEOF": 1
+        }
+      ],
+      "no-param-reassign": 0,
+      "no-plusplus": 0,
+      "no-prototype-builtins": 0,
+      "no-restricted-properties": 0,
+      "no-restricted-syntax": 0,
+      "no-shadow": 0,
+      "no-underscore-dangle": 0,
+      "no-unused-vars": [
+        "warn",
+        {
+          "args": "none"
+        }
+      ],
+      "no-use-before-define": 0,
+      "no-useless-escape": 0,
+      "object-shorthand": 0,
+      "padded-blocks": [
+        "error",
+        {
+          "switches": "never"
+        }
+      ],
+      "prefer-arrow-callback": 0,
+      "prefer-const": [
+        "warn"
+      ],
+      "prefer-template": 0,
+      "radix": [
+        "error",
+        "as-needed"
+      ],
+      "strict": [
+        0,
+        "global"
+      ]
+    }
+  },
+  "eslintIgnore": [
+    "node_modules/**"
+  ]
+}
