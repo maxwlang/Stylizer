@@ -7,4 +7,6 @@ const discord = {
     },
 };
 
+if (discord.sharding.enabled && discord.sharding.maxShards < 2) discord.sharding.enabled = false;
+
 module.exports = discord;
