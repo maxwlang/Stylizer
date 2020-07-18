@@ -13,6 +13,9 @@ class Stylize extends Command {
                 'style',
                 's',
             ],
+            cooldown: 5000,
+            description: 'Stylizes images with a pre-rendered model template',
+
         });
     }
 
