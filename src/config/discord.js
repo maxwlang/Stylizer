@@ -9,6 +9,14 @@ const discord = {
         enabled: false,
         maxShards: 2,
     },
+
+    embeds: {
+        primaryColor: '',
+        loadingColor: '17a2b8',
+        successColor: '28a745',
+        warningColor: 'ffc107',
+        dangerColor: 'dc3545',
+    },
 };
 
 if (discord.sharding.enabled && discord.sharding.maxShards < 2) discord.sharding.enabled = false;
