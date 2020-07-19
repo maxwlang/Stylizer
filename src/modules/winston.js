@@ -2,6 +2,7 @@ const { createLogger, format, transports, } = require('winston');
 const {
     logs,
     discord,
+    debug,
 } = require('../config');
 
 const {
@@ -9,7 +10,6 @@ const {
     colorize,
     printf,
     timestamp,
-    label,
 } = format;
 
 const logger = createLogger({
@@ -29,18 +29,19 @@ const logger = createLogger({
             format: combine(
                 colorize(),
                 timestamp({ format: 'MM/DD/YYYY hh:mm:ss A', }),
-                label({ label: '', }), // Optional label
                 printf(({
                     timestamp,
-                    label,
                     level,
                     message,
-                }) => `[${timestamp}][${discord.name}]${label}[${level}]: ${message}`)
+                }) => `[${timestamp}][${discord.name}][${level}]: ${message}`)
             ),
         }));
 
         return transportStorage;
     })(),
 });
+
+// Show debug messages in development environment
+if (debug.isDevelopment) logger.level = 'debug';
 
 module.exports = logger;
