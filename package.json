@@ -13,6 +13,7 @@
     "@sentry/node": "^5.19.2",
     "discord-akairo": "^8.0.0",
     "discord.js": "^12.2.0",
+    "jpeg-js": "^0.4.1",
     "libtorchjs": "^1.0.0-alpha.4",
     "sequelize": "^6.3.3",
     "sqlite3": "^5.0.0",

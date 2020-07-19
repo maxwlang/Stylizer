@@ -15,7 +15,7 @@ class CStylize extends Command {
             ],
             cooldown: 60000, // 1 Minute
             description: 'Stylizes images without a pre-rendered model template, takes GPU time.',
-            // lock: 
+            // lock:
             // locker:
         });
     }
