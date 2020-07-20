@@ -8,6 +8,10 @@ const torch = require('libtorchjs');
 const jpeg = require('jpeg-js');
 const path = require('path');
 const logger = require('../modules/winston');
+const {
+    processEmbed,
+    errorEmbed,
+} = require('../embeds');
 
 // Folder path to torch models
 const modelsFolder = path.join(
@@ -57,22 +61,11 @@ class Stylize extends Command {
         let hasURL = false;
         if (args.url !== null) hasURL = true;
 
-        // Build our processing embed.
-        const processEmbed = message.client.util.embed()
-            .setColor(0xFFAC33)
-            .setAuthor(message.client.user.username)
-            .setTitle('Supported Styles')
-            .addField('Description', 'A list of styles the bot currently supports. Width and Height are recommendations.')
-            .addField('\u200b', '\u200b', true)
-            .addField('\u200b', '\u200b', true)
-            .addField('\u200b', '\u200b', true)
-            .setTimestamp();
-
         // Build our upload embed.
         const uploadEmbed = message.client.util.embed()
             .setColor(0xFFAC33)
             .setAuthor(message.client.user.username)
-            .setTitle('Supported Styles')
+            .setTitle('Style Result')
             .addField('Description', 'A list of styles the bot currently supports. Width and Height are recommendations.')
             .addField('\u200b', '\u200b', true)
             .addField('\u200b', '\u200b', true)
@@ -80,25 +73,42 @@ class Stylize extends Command {
             .setTimestamp();
 
 
-        const msg = await message.reply('test');
-        // msg.edit('test23213');
+        // Send processing embed, update later.
+        const msg = await message.reply(processEmbed);
+
+        logger.debug(`Attachment: ${JSON.stringify(message.attachments.first(), null, 2)}`);
+
+        // Watch for when user sends both a URL and message with upload.
+        if (typeof message.attachments.first() !== 'undefined' && hasURL) return msg.edit('You\'ve provided a URL and uploaded an image, please choose one and try again.');
+
+        // TODO: If neither scan messages above for next image. (regex filename for extension, verify later)
+
         // Pretty clean and straight forward:
         // Get our image, convert, apply, convert, upload.
-        // downloadImage((hasURL ? args.url : ''))
-        //     .then(buffer => bufferToTensor(buffer))
-        //     .then(tensor => applyStyle(tensor, style))
-        //     .then(tensor => tensorToBuffer(tensor))
-        //     .then(buffer => bufferToPNG(buffer))
-        //     .then(png => {
-        //         // Upload with embed
-        //     })
-        //     .catch(logger.error);
-
-        return message.reply('Pong!');
+        return downloadImage((hasURL ? args.url : await message.attachments.first().url)) // url provided or upload url
+            .then(buffer => bufferToTensor(buffer))
+            .then(tensor => applyStyle(tensor, style))
+            .then(tensor => tensorToBuffer(tensor))
+            .then(buffer => bufferToPNG(buffer))
+            .then(png => {
+                // Upload with embed
+                msg.edit(uploadEmbed);
+            })
+            .catch(e => {
+                logger.error(e);
+                msg.edit(errorEmbed);
+            });
     }
 }
 
 module.exports = Stylize;
+
+async function downloadImage(url) {
+    logger.debug(`Will download from: ${url}`);
+
+    // eslint-disable-next-line new-cap
+    return new Buffer.alloc();
+}
 
 function jpegToTensor(jpegData) {
     const img = jpeg.decode(jpegData);
