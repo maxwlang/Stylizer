@@ -4,8 +4,8 @@
  * Stylizes images
  */
 
-const tf = require('@tensorflow/tfjs-node');
 const { Command, } = require('discord-akairo');
+const tf = require('@tensorflow/tfjs-node');
 const fileType = require('file-type');
 const fetch = require('node-fetch');
 const path = require('path');
@@ -135,7 +135,7 @@ async function downloadImage(url) {
 /**
  * Convert image to tensor
  * @param {Buffer} buffer - Image buffer to be converted
- * @returns {Any} - Tensor
+ * @returns {Tensor} - Tensor
  */
 async function bufferToTensor(buffer) {
     const tensor = tf.node.decodeImage(buffer);
@@ -146,15 +146,18 @@ async function bufferToTensor(buffer) {
 
 /**
  * Applies styles to images.
- * @param {Any} contentTensor - Content image tensor
- * @param {Any} styleTensor - Style image tensor
- * @returns {Any} - Stylized tensor
+ * @param {Tensor} contentTensor - Content image tensor
+ * @param {Tensor} styleTensor - Style image tensor
+ * @returns {Tensor} - Stylized tensor
  */
 async function applyStyle(contentTensor, styleTensor) {
 
-    const styleInceptionModelPath = path.join(modelsFolder, 'style_inception_js', 'model.json');
+    const styleInceptionModelPath = path.join('file://', modelsFolder, 'style_inception_js', 'model.json');
     logger.debug(`Loading model 1/2: ${styleInceptionModelPath}`);
-    const styleInceptionModel = await tf.node.loadSavedModel(styleInceptionModelPath);
+
+    // Exception has occurred: Error: There is no saved_model.pb file in the directory: /home/maxwlang/Desktop/Projects/Node/stylebot/src/modules/neural-style/models/transformer_js/model.json
+    // const styleInceptionModel = await tf.node.loadSavedModel(styleInceptionModelPath);
+    const styleInceptionModel = await tf.loadGraphModel(`${new URL(styleInceptionModelPath)}`);
 
     const transformerModelPath = path.join(modelsFolder, 'transformer_js', 'model.json');
     logger.debug(`Loading model 2/2: ${transformerModelPath}`);
@@ -205,7 +208,7 @@ async function applyStyle(contentTensor, styleTensor) {
 
 /**
  * Converts tensor back to png
- * @param {Any} tensor - Stylized tensor
+ * @param {Tensor} tensor - Stylized tensor
  * @returns {Any} Stylized png
  */
 async function tensorToPNG(tensor) {
