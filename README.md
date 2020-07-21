@@ -7,6 +7,7 @@ A remake of my old bot.
     - Hoshi: https://github.com/1Computer1/hoshi
 
 - Models & Styletransfer
+    - https://reiinakano.com/arbitrary-image-stylization-tfjs/
     - https://github.com/vvmnnnkv/nodejs-style-transfer/
     - https://github.com/pytorch/examples/tree/master/fast_neural_style
 
