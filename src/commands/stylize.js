@@ -3,11 +3,15 @@
  * Stylize Command
  * Stylizes images
  */
+
+const tf = require('@tensorflow/tfjs-node');
 const { Command, } = require('discord-akairo');
-const torch = require('libtorchjs');
-const jpeg = require('jpeg-js');
+const fileType = require('file-type');
+const fetch = require('node-fetch');
 const path = require('path');
 const logger = require('../modules/winston');
+
+
 const {
     processEmbed,
     errorEmbed,
@@ -75,7 +79,6 @@ class Stylize extends Command {
 
         // Send processing embed, update later.
         const msg = await message.reply(processEmbed);
-
         logger.debug(`Attachment: ${JSON.stringify(message.attachments.first(), null, 2)}`);
 
         // Watch for when user sends both a URL and message with upload.
@@ -85,16 +88,19 @@ class Stylize extends Command {
 
         // Pretty clean and straight forward:
         // Get our image, convert, apply, convert, upload.
+        // We use buffers so we don't have to store images locally! :)
         return downloadImage((hasURL ? args.url : await message.attachments.first().url)) // url provided or upload url
             .then(buffer => bufferToTensor(buffer))
-            .then(tensor => applyStyle(tensor, style))
-            .then(tensor => tensorToBuffer(tensor))
-            .then(buffer => bufferToPNG(buffer))
+            .then(tensor => applyStyle(tensor, args.style))
+            .then(tensor => tensorToPNG(tensor))
             .then(png => {
+                console.log('pnggg', png);
+
                 // Upload with embed
                 msg.edit(uploadEmbed);
             })
             .catch(e => {
+                console.log('broke:', e);
                 logger.error(e);
                 msg.edit(errorEmbed);
             });
@@ -103,69 +109,111 @@ class Stylize extends Command {
 
 module.exports = Stylize;
 
+/**
+ * Downloads an image from a URL and returns it in a buffer, has a mime type whitelist.
+ * @param {String} url - An image URL we download content from.
+ * @returns {Buffer} - Image content buffer.
+ */
 async function downloadImage(url) {
     logger.debug(`Will download from: ${url}`);
 
-    // eslint-disable-next-line new-cap
-    return new Buffer.alloc();
+    const res = await fetch(url);
+    const buffer = await res.buffer();
+    const type = await fileType.fromBuffer(buffer);
+    logger.debug(`Filetype: ${JSON.stringify(type, null, 2)}`);
+
+    // Throw an error if we don't have an image filetype we recognize.
+    if ([
+        'image/png',
+        'image/jpg',
+        'image/jpeg',
+    ].indexOf(type.mime) === -1) throw new Error('Unsupported filetype.');
+
+    return buffer;
 }
 
-function jpegToTensor(jpegData) {
-    const img = jpeg.decode(jpegData);
-    const arr = new Float32Array(img.width * img.height * 3);
-    const channelSize = img.width * img.height;
-
-    // convert from (width,height,rgba) to (rgb,width,height)
-    for (let i = 0; i < channelSize; i++) {
-        arr[i] = img.data[i * 4];
-        arr[i + channelSize] = img.data[i * 4 + 1];
-        arr[i + channelSize * 2] = img.data[i * 4 + 2];
-    }
-    // initial tensor is flat
-    const tensor = torch.tensor(arr);
-    // reshape to 1x3xWxH to match model input
-    return tensor.view([1, 3, img.width, img.height]);
+/**
+ * Convert image to tensor
+ * @param {Buffer} buffer - Image buffer to be converted
+ * @returns {Any} - Tensor
+ */
+async function bufferToTensor(buffer) {
+    const tensor = tf.node.decodeImage(buffer);
+    logger.debug(`Tensor: ${JSON.stringify(tensor, null, 2)}`);
+    return tensor;
 }
 
-function tensorToJpeg(tensor, width, height, quality = 90) {
-    const arr = tensor.toUint8Array();
-    const img = Buffer.alloc(width * height * 4);
-    const channelSize = width * height;
 
-    // convert from (rgb, width, height) to (width, height, rgba)
-    for (let i = 0; i < channelSize; i++) {
-        img[i * 4] = arr[i]; // red
-        img[i * 4 + 1] = arr[i + channelSize]; // green
-        img[i * 4 + 2] = arr[i + channelSize * 2]; // blue
-        img[i * 4 + 3] = 0xFF; // alpha - ignored
-    }
-    const rawImageData = {
-        data: img,
-        width: width,
-        height: height,
-    };
-    const jpegImageData = jpeg.encode(rawImageData, quality);
-    return jpegImageData.data;
-}
+/**
+ * Applies styles to images.
+ * @param {Any} contentTensor - Content image tensor
+ * @param {Any} styleTensor - Style image tensor
+ * @returns {Any} - Stylized tensor
+ */
+async function applyStyle(contentTensor, styleTensor) {
 
-function applyStyle(img, modelFile, width, height, cb) {
-    const input = jpegToTensor(img);
-    torch.load(modelFile, function (err, model) {
-        if (err) return cb(err);
-        // pass the image data to model
-        model.forward(input, function (err, result) {
-            if (err) return cb(err);
-            // convert to jpeg and return
-            const jpg = tensorToJpeg(result, width, height);
-            cb(null, jpg);
-        });
+    const styleInceptionModelPath = path.join(modelsFolder, 'style_inception_js', 'model.json');
+    logger.debug(`Loading model 1/2: ${styleInceptionModelPath}`);
+    const styleInceptionModel = await tf.node.loadSavedModel(styleInceptionModelPath);
+
+    const transformerModelPath = path.join(modelsFolder, 'transformer_js', 'model.json');
+    logger.debug(`Loading model 2/2: ${transformerModelPath}`);
+    const transformerModel = await tf.node.loadSavedModel(transformerModelPath);
+    logger.debug('OK');
+
+    await tf.nextFrame();
+    logger.debug('Generating 100D style representation of image 1');
+
+    await tf.nextFrame();
+    const prediction1 = await tf.tidy(() => styleInceptionModel.predict(
+        // tf.browser.fromPixels(this.combStyleImg1).toFloat().div(tf.scalar(255)).expandDims()
+        styleTensor.toFloat().div(tf.scalar(255)).expandDims() // May be content tensor?
+    ));
+
+    logger.debug('Generating 100D style representation of image 2');
+    await tf.nextFrame();
+
+    const prediction2 = await tf.tidy(() => styleInceptionModel.predict(
+        // tf.browser.fromPixels(this.combStyleImg2).toFloat().div(tf.scalar(255)).expandDims()
+        styleTensor.toFloat().div(tf.scalar(255)).expandDims()
+    ));
+
+    logger.debug('Stylizing image...');
+    await tf.nextFrame();
+
+    const combinedPrediction = await tf.tidy(() => {
+        const combStyleRatio = 50; // TODO specify this as a command arg
+
+        const scaledPrediction1 = prediction1.mul(tf.scalar(1 - combStyleRatio));
+        const scaledPrediction2 = prediction2.mul(tf.scalar(combStyleRatio));
+        return scaledPrediction1.addStrict(scaledPrediction2);
     });
+
+    const stylized = await tf.tidy(() => transformerModel.predict(
+        // [tf.browser.fromPixels(this.combContentImg).toFloat().div(tf.scalar(255)).expandDims(), combinedPrediction]
+        [contentTensor.toFloat().div(tf.scalar(255)).expandDims(), combinedPrediction]
+    ).squeeze());
+
+    // await tf.browser.toPixels(stylized, this.combStylized);
+
+    prediction1.dispose();
+    prediction2.dispose();
+    combinedPrediction.dispose();
+
+    return stylized;
 }
 
-function dataUriToBuffer(dataURI) {
-    return Buffer.from(dataURI.split(',', 2)[1], 'base64');
-}
+/**
+ * Converts tensor back to png
+ * @param {Any} tensor - Stylized tensor
+ * @returns {Any} Stylized png
+ */
+async function tensorToPNG(tensor) {
+    const combStylized = 50; // TODO: make this an arg.
 
-function bufferToDataUri(buffer, mediaType) {
-    return 'data:' + mediaType + ';base64,' + buffer.toString('base64');
+    console.log('res', tensor);
+    const png = await tf.node.encodePng(tensor /* , combStylized */);
+    tensor.dispose();
+    console.log('png', png);
+    return png;
 }
