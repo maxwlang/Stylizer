@@ -11,10 +11,12 @@
   "license": "GPLv3",
   "dependencies": {
     "@sentry/node": "^5.19.2",
+    "@tensorflow/tfjs-node": "^2.0.1",
     "discord-akairo": "^8.0.0",
     "discord.js": "^12.2.0",
+    "file-type": "^14.6.2",
     "jpeg-js": "^0.4.1",
-    "libtorchjs": "^1.0.0-alpha.4",
+    "node-fetch": "^2.6.0",
     "sequelize": "^6.3.3",
     "sqlite3": "^5.0.0",
     "winston": "^3.3.3"
