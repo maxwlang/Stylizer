@@ -7,3 +7,5 @@ data/logs/**
 data/sqlite/**
 !data/logs/.keepfile
 
+# Python VENV, re-create the venv and install on a clean clone
+src/python/neural-style/venv/
