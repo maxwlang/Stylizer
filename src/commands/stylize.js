@@ -5,27 +5,15 @@
  */
 
 const { Command, } = require('discord-akairo');
-const tf = require('@tensorflow/tfjs-node');
 const fileType = require('file-type');
 const fetch = require('node-fetch');
-const path = require('path');
 const logger = require('../modules/winston');
 
 
 const {
     processEmbed,
-    errorEmbed,
+    // errorEmbed,
 } = require('../embeds');
-
-// Folder path to torch models
-const modelsFolder = path.join(
-    path.dirname(__dirname),
-    'modules',
-    'neural-style',
-    'models',
-);
-
-logger.debug(`Models folder: ${modelsFolder}`);
 
 class Stylize extends Command {
     constructor() {
@@ -65,17 +53,6 @@ class Stylize extends Command {
         let hasURL = false;
         if (args.url !== null) hasURL = true;
 
-        // Build our upload embed.
-        const uploadEmbed = message.client.util.embed()
-            .setColor(0xFFAC33)
-            .setAuthor(message.client.user.username)
-            .setTitle('Style Result')
-            .addField('Description', 'A list of styles the bot currently supports. Width and Height are recommendations.')
-            .addField('\u200b', '\u200b', true)
-            .addField('\u200b', '\u200b', true)
-            .addField('\u200b', '\u200b', true)
-            .setTimestamp();
-
 
         // Send processing embed, update later.
         const msg = await message.reply(processEmbed);
@@ -89,21 +66,15 @@ class Stylize extends Command {
         // Pretty clean and straight forward:
         // Get our image, convert, apply, convert, upload.
         // We use buffers so we don't have to store images locally! :)
-        return downloadImage((hasURL ? args.url : await message.attachments.first().url)) // url provided or upload url
-            .then(buffer => bufferToTensor(buffer))
-            .then(tensor => applyStyle(tensor, args.style))
-            .then(tensor => tensorToPNG(tensor))
-            .then(png => {
-                console.log('pnggg', png);
-
-                // Upload with embed
-                msg.edit(uploadEmbed);
-            })
-            .catch(e => {
-                console.log('broke:', e);
-                logger.error(e);
-                msg.edit(errorEmbed);
-            });
+        return message.reply('test');
+        //     // Upload with embed
+        //     msg.edit(uploadEmbed);
+        // })
+        // .catch(e => {
+        //     console.log('broke:', e);
+        //     logger.error(e);
+        //     msg.edit(errorEmbed);
+        // });
     }
 }
 
@@ -130,93 +101,4 @@ async function downloadImage(url) {
     ].indexOf(type.mime) === -1) throw new Error('Unsupported filetype.');
 
     return buffer;
-}
-
-/**
- * Convert image to tensor
- * @param {Buffer} buffer - Image buffer to be converted
- * @returns {Tensor} - Tensor
- */
-async function bufferToTensor(buffer) {
-    const tensor = tf.node.decodeImage(buffer);
-    logger.debug(`Tensor: ${JSON.stringify(tensor, null, 2)}`);
-    return tensor;
-}
-
-
-/**
- * Applies styles to images.
- * @param {Tensor} contentTensor - Content image tensor
- * @param {Tensor} styleTensor - Style image tensor
- * @returns {Tensor} - Stylized tensor
- */
-async function applyStyle(contentTensor, styleTensor) {
-
-    const styleInceptionModelPath = path.join('file://', modelsFolder, 'style_inception_js', 'model.json');
-    logger.debug(`Loading model 1/2: ${styleInceptionModelPath}`);
-
-    // Exception has occurred: Error: There is no saved_model.pb file in the directory: /home/maxwlang/Desktop/Projects/Node/stylebot/src/modules/neural-style/models/transformer_js/model.json
-    // const styleInceptionModel = await tf.node.loadSavedModel(styleInceptionModelPath);
-    const styleInceptionModel = await tf.loadGraphModel(`${new URL(styleInceptionModelPath)}`);
-
-    const transformerModelPath = path.join(modelsFolder, 'transformer_js', 'model.json');
-    logger.debug(`Loading model 2/2: ${transformerModelPath}`);
-    const transformerModel = await tf.node.loadSavedModel(transformerModelPath);
-    logger.debug('OK');
-
-    await tf.nextFrame();
-    logger.debug('Generating 100D style representation of image 1');
-
-    await tf.nextFrame();
-    const prediction1 = await tf.tidy(() => styleInceptionModel.predict(
-        // tf.browser.fromPixels(this.combStyleImg1).toFloat().div(tf.scalar(255)).expandDims()
-        styleTensor.toFloat().div(tf.scalar(255)).expandDims() // May be content tensor?
-    ));
-
-    logger.debug('Generating 100D style representation of image 2');
-    await tf.nextFrame();
-
-    const prediction2 = await tf.tidy(() => styleInceptionModel.predict(
-        // tf.browser.fromPixels(this.combStyleImg2).toFloat().div(tf.scalar(255)).expandDims()
-        styleTensor.toFloat().div(tf.scalar(255)).expandDims()
-    ));
-
-    logger.debug('Stylizing image...');
-    await tf.nextFrame();
-
-    const combinedPrediction = await tf.tidy(() => {
-        const combStyleRatio = 50; // TODO specify this as a command arg
-
-        const scaledPrediction1 = prediction1.mul(tf.scalar(1 - combStyleRatio));
-        const scaledPrediction2 = prediction2.mul(tf.scalar(combStyleRatio));
-        return scaledPrediction1.addStrict(scaledPrediction2);
-    });
-
-    const stylized = await tf.tidy(() => transformerModel.predict(
-        // [tf.browser.fromPixels(this.combContentImg).toFloat().div(tf.scalar(255)).expandDims(), combinedPrediction]
-        [contentTensor.toFloat().div(tf.scalar(255)).expandDims(), combinedPrediction]
-    ).squeeze());
-
-    // await tf.browser.toPixels(stylized, this.combStylized);
-
-    prediction1.dispose();
-    prediction2.dispose();
-    combinedPrediction.dispose();
-
-    return stylized;
-}
-
-/**
- * Converts tensor back to png
- * @param {Tensor} tensor - Stylized tensor
- * @returns {Any} Stylized png
- */
-async function tensorToPNG(tensor) {
-    const combStylized = 50; // TODO: make this an arg.
-
-    console.log('res', tensor);
-    const png = await tf.node.encodePng(tensor /* , combStylized */);
-    tensor.dispose();
-    console.log('png', png);
-    return png;
 }

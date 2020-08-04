@@ -5,8 +5,10 @@ const {
     ListenerHandler,
     InhibitorHandler,
 } = require('discord-akairo');
+
 const Sentry = require('@sentry/node');
 const { Sequelize, } = require('sequelize');
+const spawnPyWebsocketSRV = require('../src/modules/neural-bridge').spawn;
 
 // Vital local resources
 const {
@@ -22,6 +24,18 @@ if (sentry.enabled) {
 } else {
     logger.warn('Sentry is not logging errors.');
 }
+
+// Spawn and connect to our python application bridge.
+logger.info('Spawning neural-bridge..');
+const {
+    emitter,
+    process,
+} = spawnPyWebsocketSRV()
+    .then((emitter, process) => {
+        emitter.on('stdout', out => logger.info(out));
+        emitter.on('stderr', err => logger.error(err));
+        return { emitter, process, };
+    }).catch(e => logger.error(e.toString));
 
 // Create sequelize instance
 let sequelize = new Sequelize(database);
@@ -83,6 +97,10 @@ class Stylizer extends AkairoClient {
 
         // Pass in sequelize
         this.sequelize = sequelize;
+
+        // Pass in our neural bridge variables
+        this.neuralEmitter = emitter;
+        this.neuralProcess = process;
     }
 }
 
