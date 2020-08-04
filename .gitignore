@@ -1,11 +1,23 @@
-# Junk
+## Junk
 node_modules/
 .vscode/
 
-# Data files
+
+## Data files
 data/logs/**
 data/sqlite/**
 !data/logs/.keepfile
 
-# Python VENV, re-create the venv and install on a clean clone
+
+## Python trash
+# VENV, recreate and install dependencies before using
 src/python/neural-style/venv/
+
+src/python/neural-style/examples
+
+# Do not upload user content
+src/python/neural-style/image_input
+src/python/neural-style/image_output
+src/python/neural-style/video_input
+src/python/neural-style/video_output
+src/python/neural-style/styles
