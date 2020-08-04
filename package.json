@@ -10,8 +10,7 @@
   "author": "maxwlang",
   "license": "GPLv3",
   "dependencies": {
-    "@sentry/node": "^5.19.2",
-    "@tensorflow/tfjs-node": "^2.0.1",
+    "@sentry/node": "^5.20.0",
     "discord-akairo": "^8.0.0",
     "discord.js": "^12.2.0",
     "file-type": "^14.6.2",
@@ -22,7 +21,7 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
-    "eslint": "^7.4.0",
+    "eslint": "^7.5.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0",
     "nodemon": "^2.0.4"
